@@ -9,7 +9,7 @@ from ai_processor import structure_content_with_ai
 from cleaner import clean_html
 from scraper import fetch_page_html
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / ".env")
 
 app = FastAPI(title="Webpage -> AI-Ready Structured Data API")
 
