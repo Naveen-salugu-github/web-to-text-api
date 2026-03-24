@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webpage -> AI-Ready Structured Data API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      pre {
+        background: #f5f5f5;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+      code {
+        font-family: Consolas, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Webpage -> AI-Ready Structured Data API</h1>
+    <p>
+      This API takes a webpage URL, extracts readable content, and returns AI-ready structured JSON.
+    </p>
+
+    <h2>Endpoint</h2>
+    <p><code>POST /parse-page</code></p>
+
+    <h2>Request JSON</h2>
+    <pre><code>{
+  "url": "https://example.com/article"
+}</code></pre>
+
+    <h2>cURL Example</h2>
+    <pre><code>curl -X POST "http://127.0.0.1:8000/parse-page" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"url\":\"https://example.com/article\"}"</code></pre>
+
+    <h2>Response JSON (example)</h2>
+    <pre><code>{
+  "title": "Example Article",
+  "summary": "Short summary of the page.",
+  "sections": [
+    { "heading": "Overview", "content": "..." },
+    { "heading": "Details", "content": "..." }
+  ],
+  "key_points": ["Point 1", "Point 2"],
+  "entities": ["Entity A", "Entity B"]
+}</code></pre>
+  </body>
+</html>
