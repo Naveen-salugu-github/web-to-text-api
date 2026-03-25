@@ -2,8 +2,13 @@
 Thin entrypoint so `uvicorn main:app --reload` works from the repo root.
 The real app lives in `webpage-ai-parser/main.py`.
 """
+import asyncio
 import importlib.util
 import sys
+
+# Playwright needs subprocess support; SelectorEventLoop on Windows does not provide it.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 from pathlib import Path
 
 _SUB = Path(__file__).resolve().parent / "webpage-ai-parser"

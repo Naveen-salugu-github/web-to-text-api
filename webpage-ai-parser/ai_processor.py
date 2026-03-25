@@ -2,7 +2,12 @@ import json
 import os
 from typing import Any, Dict
 
-from groq import Groq
+from groq import APIStatusError, BadRequestError, Groq, GroqError
+
+# Groq retires model IDs over time; override via GROQ_MODEL. See https://console.groq.com/docs/models
+DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
+# Rough cap so huge pages stay within context; tune via env if needed.
+MAX_INPUT_CHARS = int(os.getenv("GROQ_MAX_INPUT_CHARS", "48000"))
 
 
 def _extract_json_object(text: str) -> Dict[str, Any]:
@@ -31,7 +36,11 @@ def structure_content_with_ai(content: str) -> dict:
     if not api_key:
         raise ValueError("Missing GROQ_API_KEY environment variable.")
 
+    if len(content) > MAX_INPUT_CHARS:
+        content = content[:MAX_INPUT_CHARS] + "\n\n[...truncated for model context limit...]"
+
     client = Groq(api_key=api_key)
+    model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)
 
     prompt = (
         "You are an AI that converts webpage text into structured knowledge useful for AI agents.\n\n"
@@ -47,14 +56,23 @@ def structure_content_with_ai(content: str) -> dict:
         f"Text:\n{content}"
     )
 
-    response = client.chat.completions.create(
-        model="llama3-70b-8192",
-        messages=[
-            {"role": "system", "content": "Return concise, factual JSON only."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.2,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "Return concise, factual JSON only."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+        )
+    except BadRequestError as exc:
+        raise ValueError(
+            f"Groq rejected the request (check GROQ_MODEL; default is {DEFAULT_GROQ_MODEL}). {exc}"
+        ) from exc
+    except APIStatusError as exc:
+        raise ValueError(f"Groq API error: {exc}") from exc
+    except GroqError as exc:
+        raise ValueError(f"Groq client error: {exc}") from exc
 
     raw_output = response.choices[0].message.content or "{}"
     structured = _extract_json_object(raw_output)
