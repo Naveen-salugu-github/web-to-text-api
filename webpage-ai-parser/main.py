@@ -1,12 +1,17 @@
 import asyncio
+import os
 import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env before importing app modules (local dev). On Railway, variables come from the host env.
+load_dotenv(Path(__file__).parent / ".env")
 
 # Before Uvicorn creates a loop: Windows needs Proactor for subprocess (Playwright).
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, HttpUrl
@@ -15,11 +20,18 @@ from ai_processor import structure_content_with_ai
 from cleaner import clean_html
 from scraper import fetch_page_html
 
-load_dotenv(Path(__file__).parent / ".env")
-
 app = FastAPI(title="Webpage -> AI-Ready Structured Data API")
 # Swagger UI sometimes mis-renders OAS 3.1 response $refs; 3.0.2 displays reliably.
 app.openapi_version = "3.0.2"
+
+
+@app.get("/health")
+def health() -> dict:
+    """Check that the process sees env vars (does not expose secrets)."""
+    return {
+        "status": "ok",
+        "groq_api_key_configured": bool((os.getenv("GROQ_API_KEY") or "").strip()),
+    }
 
 
 class ParsePageRequest(BaseModel):
