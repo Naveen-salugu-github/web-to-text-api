@@ -32,9 +32,12 @@ def _extract_json_object(text: str) -> Dict[str, Any]:
 
 def structure_content_with_ai(content: str) -> dict:
     """Use Groq LLM to convert cleaned text into structured JSON."""
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = (os.getenv("GROQ_API_KEY") or "").strip()
     if not api_key:
-        raise ValueError("Missing GROQ_API_KEY environment variable.")
+        raise ValueError(
+            "Missing GROQ_API_KEY. Set it in Railway: open your web service → Variables → "
+            "add GROQ_API_KEY (same value as local .env), save, then redeploy."
+        )
 
     if len(content) > MAX_INPUT_CHARS:
         content = content[:MAX_INPUT_CHARS] + "\n\n[...truncated for model context limit...]"
